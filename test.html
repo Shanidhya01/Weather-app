@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px 0; }
+        input { padding: 10px; width: 200px; }
+        .result { margin: 20px 0; padding: 20px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather App Debugging</h1>
+        
+        <div>
+            <input type="text" id="cityInput" placeholder="Enter city name" value="London">
+            <button onclick="testAPI()">Test AccuWeather API</button>
+        </div>
+        
+        <div id="result" class="result">
+            Click the button to test the API...
+        </div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const city = document.getElementById('cityInput').value;
+            const result = document.getElementById('result');
+            const ACCUWEATHER_API_KEY = "COQ41StHSZgIASDN41mtGq7PEXPZm0ld";
+            
+            result.innerHTML = "Testing API...";
+            
+            try {
+                console.log("Testing AccuWeather API for:", city);
+                
+                // Step 1: Get location key
+                const locationUrl = `https://dataservice.accuweather.com/locations/v1/cities/search?apikey=${ACCUWEATHER_API_KEY}&q=${city}`;
+                console.log("Location URL:", locationUrl);
+                
+                const locationResponse = await fetch(locationUrl);
+                console.log("Location response status:", locationResponse.status);
+                
+                if (!locationResponse.ok) {
+                    throw new Error(`Location not found (${locationResponse.status})`);
+                }
+                
+                const locationData = await locationResponse.json();
+                console.log("Location data:", locationData);
+                
+                if (locationData.length === 0) {
+                    throw new Error("City not found");
+                }
+                
+                const locationKey = locationData[0].Key;
+                console.log("Location key:", locationKey);
+                
+                // Step 2: Get current weather
+                const weatherUrl = `https://dataservice.accuweather.com/currentconditions/v1/${locationKey}?apikey=${ACCUWEATHER_API_KEY}&details=true`;
+                console.log("Weather URL:", weatherUrl);
+                
+                const weatherResponse = await fetch(weatherUrl);
+                console.log("Weather response status:", weatherResponse.status);
+                
+                if (!weatherResponse.ok) {
+                    throw new Error(`Weather data not found (${weatherResponse.status})`);
+                }
+                
+                const weatherData = await weatherResponse.json();
+                console.log("Weather data:", weatherData);
+                
+                const current = weatherData[0];
+                
+                result.innerHTML = `
+                    <h3>Success!</h3>
+                    <p><strong>City:</strong> ${locationData[0].LocalizedName}</p>
+                    <p><strong>Temperature:</strong> ${current.Temperature.Metric.Value}°C</p>
+                    <p><strong>Condition:</strong> ${current.WeatherText}</p>
+                    <p><strong>Humidity:</strong> ${current.RelativeHumidity}%</p>
+                    <p><strong>Feels Like:</strong> ${current.RealFeelTemperature.Metric.Value}°C</p>
+                `;
+                
+            } catch (error) {
+                console.error("API Test Error:", error);
+                result.innerHTML = `<h3>Error:</h3><p>${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
